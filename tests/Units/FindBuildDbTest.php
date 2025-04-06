@@ -51,7 +51,7 @@ class FindBuildDbTest extends TestCase {
   public function test_build_locate_sqlite_db () {
     $dir = realpath( __DIR__.'/..' );
     $builder = new FindDbBuilder( 'sqlite::memory:', $dir );
-    $builder->locates_build();
+    $builder->build();
     $ret = $builder->select_one( '%'.basename( __FILE__ ).'%' );
     
     //
@@ -70,7 +70,7 @@ class FindBuildDbTest extends TestCase {
     $fullpath = "{$dir}/".$filename;
     file_put_contents($fullpath,random_bytes(128));
     $builder = new FindDbBuilder( 'sqlite::memory:',$dir );
-    $builder->locates_build();
+    $builder->build();
     $ret[]=$builder->select_one( "./{$filename}" );
     /// update file
     sleep(1);
@@ -95,7 +95,7 @@ class FindBuildDbTest extends TestCase {
     $fullpath = "{$dir}/".$filename;
     file_put_contents($fullpath,random_bytes(128));
     $builder = new FindDbBuilder( 'sqlite::memory:',$dir );
-    $builder->locates_build();
+    $builder->build();
     $ret[]=$builder->select_one( "./{$filename}" );
     // delete file
     unlink($fullpath);
@@ -112,7 +112,7 @@ class FindBuildDbTest extends TestCase {
     $builder->addIgnore('\.git');
     $builder->addIgnore('vendor\/');
     $builder->addIgnore('composer\..+');
-    $builder->locates_build();
+    $builder->build();
     $ret[] = $builder->select( '%.git%' );
     $ret[] = $builder->select( '%vendor/%' );
     $ret[] = $builder->select( '%composer.%' );

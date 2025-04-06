@@ -79,7 +79,7 @@ class FindDbBuilder {
     return  (new PdoTableRepository($this->pdo,$this->table))->count();
   }
   
-  public function locates_build () {
+  public function build () {
     $this->begin();
     $this->find_files( function( $stat ) {
       if($this->isMatchIgnore($stat->filename)){
