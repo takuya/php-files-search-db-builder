@@ -1,3 +1,4 @@
+PRAGMA auto_vacuum = 1;
 -- noinspection SqlNoDataSourceInspectionForFile
 CREATE TABLE IF NOT EXISTS locates (
     id  INTEGER PRIMARY KEY AUTOINCREMENT, -- 行を一意に識別するための主キー
@@ -15,9 +16,14 @@ CREATE INDEX IF NOT EXISTS idx_filename_prefix ON locates (filename);
 
 -- 3. filename カラムの全文検索を行うための FTS5 仮想テーブルの作成
 CREATE VIRTUAL TABLE IF NOT EXISTS locates_fts USING fts5(
+    id UNINDEXED,
     filename,
+    mtime UNINDEXED,
+    ctime UNINDEXED,
+    size UNINDEXED,
     content=locates,
-    tokenize=trigram
+    content_rowid='id',
+    tokenize = "trigram"
 --    tokenize='icu ja_JP'
 --     tokenize='unicode61 remove_diacritics 1' -- 必要に応じて 'icu ja_JP' などに変更
 
@@ -41,3 +47,11 @@ END;
 CREATE TRIGGER IF NOT EXISTS locates_au AFTER UPDATE ON locates BEGIN
 UPDATE locates_fts SET filename = new.filename  WHERE rowid = old.id;
 END;
+
+-- bigramは無理そう
+-- 日本語ではbigramをつくるのはめんどくさい
+-- CREATE VIRTUAL TABLE trigram_fts_vocab USING fts5vocab( locates_fts , row );
+-- 数GBならメモリに載るので、LIKEでも正直そこまで速度低下は気にならない。
+-- ど、うしてもやりたい場合は、むちゃすることもできるが・・・
+-- https://www.space-i.com/post-blog/sqlite-fts-trigram-tokenizer%E3%81%A7unigram%EF%BC%86bigram%E6%A4%9C%E7%B4%A2%E3%81%BE%E3%81%A7%E3%82%B5%E3%83%9D%E3%83%BC%E3%83%88-%E6%97%A5%E6%9C%AC%E8%AA%9E%E5%85%A8%E6%96%87%E6%A4%9C%E7%B4%A2/
+

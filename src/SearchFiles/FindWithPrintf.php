@@ -29,12 +29,15 @@ class FindWithPrintf {
   }
   public function findSize(string $opr , string $size){
     $opr = match ($opr){
-      '<' => '+',
+      '-' => '-',
+      '+' => '+',
+      '>' => '+',
       'gt' => '+',
-      '>' => '-',
+      '<' => '-',
       'lt' => '-',
+      default=>false
     };
-    $this->size_opts = "{$opr}{$size}";
+    $opr && $this->size_opts = "{$opr}{$size}";
   }
   protected function parseFileTime ( string $timestamp_utc ) {
     return DateTimeConvert::ctime_jst($timestamp_utc);

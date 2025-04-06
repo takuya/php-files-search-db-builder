@@ -104,7 +104,7 @@ class FindBuildDbTest extends TestCase {
     $ret[]=$builder->select( "./{$filename}" );
     //
     $this->assertNotFalse($ret[0]);
-    $this->assertFalse($ret[1]);
+    $this->assertNull($ret[1]);
   }
   
   

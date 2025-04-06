@@ -8,10 +8,16 @@ use PDO;
 use Takuya\Utils\DateTimeConvert;
 use PHPUnit\Util\Exception;
 use Takuya\ProcOpen\ProcOpen;
+use Takuya\Utils\PdoTable\PdoTableRepository;
+use Takuya\Utils\PdoTable\Traits\TransactionBlock;
 
 class FindDbBuilder {
+  use TransactionBlock;
   public PDO $pdo;
   protected int $transaction_level;
+  public bool $dry_run=false;
+  public bool $verbose=false;
+  protected array $find_size;
   
   public function __construct ( string $DSN, protected string $base_path, public string $table = 'locates' ) {
     $this->pdo = new PDO( $DSN );
@@ -38,52 +44,27 @@ class FindDbBuilder {
     $pdo->commit();
   }
   
-  public function begin () {
-    $this->transaction_level++;
-    $this->pdo->beginTransaction();
-  }
-  
-  public function commit () {
-    $this->pdo->commit();
-    $this->transaction_level--;
-  }
-  
-  public function rollBack () {
-    $this->pdo->rollBack();
-    $this->transaction_level--;
-  }
-  
   public function insert ( string $filename, string $mtime, string $ctime, string $size ) {
     $stat = (object)compact( 'filename', 'mtime', 'ctime', 'size' );
     $stat->mtime = is_numeric( $stat->ctime ) ? DateTimeConvert::ctime_jst( $stat->mtime ) : $stat->mtime;
     $stat->ctime = is_numeric( $stat->ctime ) ? DateTimeConvert::ctime_jst( $stat->ctime ) : $stat->ctime;
-    $pdo = $this->pdo;
-    $smt = $pdo->prepare( 'INSERT INTO '.$this->table.' (filename,mtime,ctime,size) VALUES (:filename,:mtime,:ctime,:size);' );
-    foreach ( ['filename', 'mtime', 'ctime', 'size'] as $col ) {
-      $smt->bindValue( $col, $stat->{$col} );
-    }
-    return $smt->execute();
+    $table = new PdoTableRepository($this->pdo,$this->table);
+    return $table->insert((array)$stat);
   }
   
   public function select ( string $filename ) {
-    $pdo = $this->pdo;
-    $smt = $pdo->prepare( 'select * from '.$this->table.' where filename LIKE :filename' );
-    $smt->bindValue( 'filename', $filename );
-    $smt->execute();
-    return $smt->fetch( PDO::FETCH_OBJ );
+    return (new PdoTableRepository($this->pdo,$this->table))->select_one('filename','LIKE',$filename);
   }
   
   public function count () {
-    $pdo = $this->pdo;
-    $smt = $pdo->prepare( 'select count(*) as count from '.$this->table );
-    $smt->execute();
-    return $smt->fetch( PDO::FETCH_OBJ )->count;
+    return  (new PdoTableRepository($this->pdo,$this->table))->count();
   }
   
   public function locates_build () {
     $this->begin();
     $this->find_files( function( $stat ) {
-      $this->insert( $stat->filename, $stat->mtime, $stat->ctime, $stat->size );
+      $this->dry_run || $ret=$this->insert( $stat->filename, $stat->mtime, $stat->ctime, $stat->size );
+      $this->verbose && ( fwrite(STDOUT,$ret.PHP_EOL)&& fflush(STDOUT));
     } );
     $this->commit();
   }
@@ -116,15 +97,8 @@ class FindDbBuilder {
         return $this->delete( $filename );
       }
       //
-      $pdo = $this->pdo;
       $this->begin();
-      $smt = $pdo->prepare( $sql = 'update '.$this->table
-        .' SET '
-        .' size=:size, '
-        .' mtime=:mtime, '
-        .' ctime=:ctime '
-        .' where filename =:filename limit 1 ' );
-      $ret = $smt->execute( static::fileStat( $filename,$this->base_path ) );
+      $ret = (new PdoTableRepository($this->pdo,$this->table))->update(static::fileStat( $filename,$this->base_path ));
       $this->commit();
       return $ret;
     } catch (\Exception $e) {
@@ -137,11 +111,8 @@ class FindDbBuilder {
   
   protected function delete ( $filename ) {
     try {
-      $pdo = $this->pdo;
       $this->begin();
-      $smt = $pdo->prepare( 'delete from '.$this->table.' where filename =:filename' );
-      $smt->bindParam( 'filename', $filename );
-      $ret = $smt->execute();
+      $ret = (new PdoTableRepository($this->pdo,$this->table))->delete('filename', $filename );
       $this->commit();
       return $ret;
     } catch (\Exception $e) {
@@ -149,10 +120,13 @@ class FindDbBuilder {
       throw $e;
     }
   }
+  public function findSize($opt){
+    $this->find_size = [substr($opt,0,1),substr($opt,0,strlen($opt))];
+  }
   
   protected function find_files ( callable $fn ) {
     $find = new FindWithPrintf( '.', $this->base_path );
-    $find->findSize('<','1M');
+    !empty($this->find_size) && $find->findSize(...$this->find_size);
     $find->run( $fn );
   }
 }
