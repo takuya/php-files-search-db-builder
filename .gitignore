@@ -7,4 +7,5 @@ composer.lock
 composer-setup.php
 .idea/
 .phpunit.cache
-
+sample/build.php
+sample.db
