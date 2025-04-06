@@ -152,6 +152,7 @@ class FindDbBuilder {
   
   protected function find_files ( callable $fn ) {
     $find = new FindWithPrintf( '.', $this->base_path );
+    $find->findSize('<','1M');
     $find->run( $fn );
   }
 }

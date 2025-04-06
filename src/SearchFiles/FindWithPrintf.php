@@ -4,6 +4,7 @@ namespace Takuya\SearchFiles;
 
 use Takuya\ProcessExec\ProcessExecutor;
 use Takuya\ProcessExec\ExecArgStruct;
+use Takuya\Utils\DateTimeConvert;
 
 class FindWithPrintf {
   protected string $print_format = '{"mtime":"%T@","ctime":"%C@","size":%s }:: %p\n';
@@ -36,19 +37,20 @@ class FindWithPrintf {
     $this->size_opts = "{$opr}{$size}";
   }
   protected function parseFileTime ( string $timestamp_utc ) {
-    $timestamp_utc = [
-      intval( $timestamp_utc ), round( fmod( $timestamp_utc, 1 )*1000000 ),
-    ];
-    $tz = new  \DateTimeZone( 'UTC' );
-    $date = \DateTime::createFromFormat( 'U.u', sprintf( '%d.%06d', ...$timestamp_utc ), $tz );
-    $date->setTimezone( new \DateTimeZone( $this->tz ) );
-    return $date->format('c');
+    return DateTimeConvert::ctime_jst($timestamp_utc);
+  }
+  protected function stat($filename){
+    return (object)array_intersect_key( stat( __FILE__ ), array_flip( explode( ',', 'mtime,ctime,size' ) ) );
   }
   
   protected function parsePrintedLine ( $line, $fn ) {
+    $line = mb_convert_encoding($line,'utf8');
     preg_match( '/^(?<json>\{.+?})::\s*(?<file>.+)$/', $line, $m );
     [$json, $file] = [$m['json'] ?? '{}', $m['file'] ?? ''];
-    $stat = json_decode( $json );
+    $stat = json_decode( $json);
+    if (empty($stat->mtime)){
+      $stat = $this->stat($file);
+    }
     $stat->filename = $file;
     $stat->mtime = $this->parseFileTime( $stat->mtime );
     $stat->ctime = $this->parseFileTime( $stat->ctime );
