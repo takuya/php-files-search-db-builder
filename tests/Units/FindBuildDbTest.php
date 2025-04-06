@@ -40,7 +40,7 @@ class FindBuildDbTest extends TestCase {
     $this->assertEquals( true, $ret );
     //
     //
-    $ret = $builder->select( __FILE__ );
+    $ret = $builder->select_one( __FILE__ );
     //
     $this->assertEquals( $stat['size'], $ret->size );
     $this->assertEquals( __FILE__, $ret->filename );
@@ -52,7 +52,7 @@ class FindBuildDbTest extends TestCase {
     $dir = realpath( __DIR__.'/..' );
     $builder = new FindDbBuilder( 'sqlite::memory:', $dir );
     $builder->locates_build();
-    $ret = $builder->select( '%'.basename( __FILE__ ).'%' );
+    $ret = $builder->select_one( '%'.basename( __FILE__ ).'%' );
     
     //
     $stat = array_intersect_key( stat( __FILE__ ), array_flip( explode( ',', 'mtime,ctime,size' ) ) );
@@ -71,13 +71,13 @@ class FindBuildDbTest extends TestCase {
     file_put_contents($fullpath,random_bytes(128));
     $builder = new FindDbBuilder( 'sqlite::memory:',$dir );
     $builder->locates_build();
-    $ret[]=$builder->select( "./{$filename}" );
+    $ret[]=$builder->select_one( "./{$filename}" );
     /// update file
     sleep(1);
     file_put_contents($fullpath,random_bytes(512));
     $builder->update($fullpath);
     //
-    $ret[]=$builder->select( "./{$filename}" );
+    $ret[]=$builder->select_one( "./{$filename}" );
     $this->assertEquals(512,$ret[1]->size);
     // assert equals to stat().
     $stat = (object)FindDbBuilder::fileStat($filename,$dir);
@@ -96,15 +96,30 @@ class FindBuildDbTest extends TestCase {
     file_put_contents($fullpath,random_bytes(128));
     $builder = new FindDbBuilder( 'sqlite::memory:',$dir );
     $builder->locates_build();
-    $ret[]=$builder->select( "./{$filename}" );
+    $ret[]=$builder->select_one( "./{$filename}" );
     // delete file
     unlink($fullpath);
     $builder->update($fullpath);
     // detect deleted.
-    $ret[]=$builder->select( "./{$filename}" );
+    $ret[]=$builder->select_one( "./{$filename}" );
     //
     $this->assertNotFalse($ret[0]);
     $this->assertNull($ret[1]);
+  }
+  public function test_build_locate_files_using_ignore_list () {
+    $dir = realpath( __DIR__.'/../..' );
+    $builder = new FindDbBuilder( 'sqlite::memory:', $dir );
+    $builder->addIgnore('\.git');
+    $builder->addIgnore('vendor\/');
+    $builder->addIgnore('composer\..+');
+    $builder->locates_build();
+    $ret[] = $builder->select( '%.git%' );
+    $ret[] = $builder->select( '%vendor/%' );
+    $ret[] = $builder->select( '%composer.%' );
+    
+    foreach ( $ret as $r ) {
+      $this->assertEmpty($r);
+    }
   }
   
   
