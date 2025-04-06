@@ -16,6 +16,12 @@ vcs https://github.com/takuya/$name
 composer require takuya/$name:master
 composer install
 ```
+```shell
+name='takuya/php-files-search-db-builder'
+repo=git@github.com:$name.git
+composer config repositories.$name vcs $repo
+composer require $name
+```
 
 ## sample 
 
