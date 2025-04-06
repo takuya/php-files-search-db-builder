@@ -18,11 +18,27 @@ class FindDbBuilder {
   public bool $dry_run=false;
   public bool $verbose=false;
   protected array $find_size;
+  protected array $ignore_pattern;
   
   public function __construct ( string $DSN, protected string $base_path, public string $table = 'locates' ) {
     $this->pdo = new PDO( $DSN );
     $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
     !$this->table_exists() && $this->createTable();
+  }
+  public function addIgnore(string $pattern):void {
+    $easy_delim_check = fn ($pattern) => preg_match('/^([\|\/#~])([^\/#~]*)\1([a-zA-Z]*)$/', $pattern);
+    if($easy_delim_check($pattern)){
+      throw new \InvalidArgumentException('regex with delim. remove delim.');
+    }
+    $this->ignore_pattern ??=[];
+    $this->ignore_pattern[] = $pattern;
+  }
+  public function isMatchIgnore($filename){
+    if(empty($this->ignore_pattern)){
+      return false;
+    }
+    $regex = implode('|',$this->ignore_pattern);
+    return preg_match("/{$regex}/",$filename);
   }
   
   protected function table_exists () {
@@ -52,8 +68,11 @@ class FindDbBuilder {
     return $table->insert((array)$stat);
   }
   
-  public function select ( string $filename ) {
+  public function select_one ( string $filename ) {
     return (new PdoTableRepository($this->pdo,$this->table))->select_one('filename','LIKE',$filename);
+  }
+  public function select ( string $filename ) {
+    return (new PdoTableRepository($this->pdo,$this->table))->select('filename','LIKE',$filename);
   }
   
   public function count () {
@@ -63,6 +82,9 @@ class FindDbBuilder {
   public function locates_build () {
     $this->begin();
     $this->find_files( function( $stat ) {
+      if($this->isMatchIgnore($stat->filename)){
+        return;
+      }
       $this->dry_run || $ret=$this->insert( $stat->filename, $stat->mtime, $stat->ctime, $stat->size );
       $this->verbose && ( fwrite(STDOUT,$ret.PHP_EOL)&& fflush(STDOUT));
     } );
