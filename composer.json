@@ -1,5 +1,5 @@
 {
-  "name": "takuya/php-search-files",
+  "name": "takuya/php-files-search-db-builder",
   "description": "search file names in directory",
   "type": "library",
   "license": "GPL-3.0-or-later",
