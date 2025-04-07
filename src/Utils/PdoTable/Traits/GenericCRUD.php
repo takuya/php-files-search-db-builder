@@ -48,7 +48,7 @@ trait GenericCRUD {
       $sql = 'update '.$this->table
         .' SET '.$sets.' '
         .( $row ? "where {$row['col']} = :{$row['col']} " : '' )
-        .'limit :limit';
+        .' limit :limit';
       $pdo = $this->pdo;
       $st = $pdo->prepare( $sql );
       return $st->execute( $params );
