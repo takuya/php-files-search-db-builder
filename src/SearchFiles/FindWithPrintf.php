@@ -69,7 +69,7 @@ class FindWithPrintf {
       $this->dir ?? '.',
       '-type','f',
       ...($this?->size_opts?['-size',$this->size_opts]:[] ),
-      ...($this?->name_opts?['-name',$this->name_opts]:[] ),
+      ...($this?->name_opts?['-wholename',$this->name_opts]:[] ),
       '-printf', $this->print_format,
     ];
     $arg = new ExecArgStruct( ...$cmd );
