@@ -134,7 +134,7 @@ class FindDbBuilder {
   protected function delete ( $filename ) {
     try {
       $this->begin();
-      $ret = (new PdoTableRepository($this->pdo,$this->table))->delete('filename', $filename );
+      $ret = (new PdoTableRepository($this->pdo,$this->table))->delete('filename', $this->path_to_base_dir( $filename ) );
       $this->commit();
       return $ret;
     } catch (\Exception $e) {
