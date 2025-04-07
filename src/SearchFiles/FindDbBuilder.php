@@ -111,13 +111,13 @@ class FindDbBuilder {
   }
   
   public function update ( $filename ) {
+    if ( !file_exists( $filename ) ) {
+      return $this->delete( $filename );
+    }
     try {
       $wd = getcwd();
       chdir( $this->base_path );
       $filename = $this->path_to_base_dir( $filename );
-      if ( !file_exists( $filename ) ) {
-        return $this->delete( $filename );
-      }
       //
       $this->begin();
       $ret = (new PdoTableRepository($this->pdo,$this->table))->update(static::fileStat( $filename,$this->base_path ));
