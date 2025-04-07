@@ -94,7 +94,7 @@ class FindDbBuilder {
   public static function fileStat ( $filename,$base_path ) {
     $filename = ltrim($filename,'./');
     $cmd = new FindWithPrintf('.', $base_path);
-    $cmd->findName($filename);
+    $cmd->findName('./'.$filename);
     $stat = null;
     $cmd->run(function($a)use(&$stat){$stat=$a;});
     return (array)$stat;
@@ -111,6 +111,9 @@ class FindDbBuilder {
   }
   
   public function update ( $filename ) {
+    if (is_dir($filename)){
+      return false;
+    }
     if ( !file_exists( $filename ) ) {
       return $this->delete( $filename );
     }
