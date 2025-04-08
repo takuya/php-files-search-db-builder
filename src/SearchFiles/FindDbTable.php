@@ -30,7 +30,7 @@ class FindDbTable {
   }
   
   protected function repo () {
-    return new PdoTableRepository( $this->pdo, $this->tablename );
+    return new PdoTableRepository( $this->pdo, $this->tablename,FStatRecord::class);
   }
   
   public function count ( string $filename = null ) {

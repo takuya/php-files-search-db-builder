@@ -87,8 +87,8 @@ class FindDbBuilder {
     $this->commitTranscation();
   }
   
-  public static function relative_filename ( $full_path, $to_base_dir ) {
-    if ( false == str_contains( $full_path, $to_base_dir ) ) {
+  public static function relative_filename ( string $full_path, string $to_base_dir ): string {
+    if ( !str_contains( $full_path, $to_base_dir ) ) {
       throw new \InvalidArgumentException( "filename should be in \$this->base_path" );
     }
     $file = str_replace( $to_base_dir, '', $full_path );
@@ -97,10 +97,11 @@ class FindDbBuilder {
   }
   
   public function path_in_base_dir ( $file ) {
+    // suppress exception.
     return str_contains( $file, $this->base_path ) ? static::relative_filename( $file, $this->base_path ) : $file;
   }
   
-  public function updateEntry ( $filename, $use_transaction = false ) {
+  public function updateEntry ( $filename, $use_transaction = false ): bool {
     if ( is_dir( $filename ) ) {
       throw new \InvalidArgumentException( 'filename is directory.' );
     }
@@ -149,9 +150,9 @@ class FindDbBuilder {
     $find->run( $fn );
   }
   
-  public function getFileStat ( $relative_name ) {
+  public function getFileStat ( $relative_name ): ?FStat {
     if ( $this->isMatchIgnore( $relative_name ) ) {
-      return [];
+      return null;
     }
     try {
       $stat = static::fileStat( $relative_name, $this->base_path, $this->find_size ?? null );
@@ -161,7 +162,7 @@ class FindDbBuilder {
     return $stat;
   }
   
-  public static function fileStat ( $filename, $base_path, $opt_size = null ) {
+  public static function fileStat ( $filename, $base_path, $opt_size = null ): FStat {
     $filename = !str_contains( $filename, $base_path ) ? $filename : static::relative_filename( $filename, $base_path );
     $filename = str_starts_with( $filename, './' ) ? $filename : './'.$filename;
     $stat = FStat::fromFindCmd( $filename, $base_path, $opt_size );

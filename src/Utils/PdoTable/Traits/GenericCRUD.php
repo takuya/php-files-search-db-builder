@@ -5,6 +5,7 @@ namespace Takuya\Utils\PdoTable\Traits;
 use PDO;
 
 trait GenericCRUD {
+  use FetchRow;
   public function insert ( array $col_val, bool $use_transaction = false ) {
     $fn = function() use ( $col_val ) {
       $sql = 'INSERT INTO '
@@ -35,7 +36,7 @@ trait GenericCRUD {
   public function select ( string $col, string $cond_or_val, string $val = null, $limit = null ) {
     [$st, $vals] = $this->select_statment( ...func_get_args() );
     $st->execute();
-    while ( $row = $st->fetch( PDO::FETCH_OBJ ) ) {
+    while ( $row = $this->fetch($st) ) {
       yield $row;
     }
   }
@@ -43,7 +44,7 @@ trait GenericCRUD {
   public function selectAll () {
     $st = $this->pdo->prepare( 'select * from '.$this->table.';' );
     $st->execute();
-    while ( $row = $st->fetch( PDO::FETCH_OBJ ) ) {
+    while ( $row = $this->fetch($st) ) {
       yield $row;
     }
   }
