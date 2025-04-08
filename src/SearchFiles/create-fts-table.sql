@@ -2,7 +2,7 @@ PRAGMA auto_vacuum = 1;
 -- noinspection SqlNoDataSourceInspectionForFile
 CREATE TABLE IF NOT EXISTS locates (
     id  INTEGER PRIMARY KEY AUTOINCREMENT, -- 行を一意に識別するための主キー
-    filename TEXT NOT NULL,
+    filename TEXT NOT NULL UNIQUE,
     mtime INTEGER, -- Unixエポック秒を格納する INTEGER 型
     ctime INTEGER, -- Unixエポック秒を格納する INTEGER 型
     size INTEGER
