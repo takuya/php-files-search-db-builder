@@ -40,7 +40,7 @@ class FindDbBuilder {
       return false;
     }
     $regex = implode( '|', $this->ignore_pattern );
-    return preg_match( "/{$regex}/", $filename );
+    return preg_match( "/{$regex}/", $filename )==1;
   }
   
   protected function table_exists () {
@@ -84,17 +84,21 @@ class FindDbBuilder {
     } );
     $this->commitTranscation();
   }
-  
   public static function fileStat ( $filename, $base_path ) {
-    if ( str_contains( $filename, $base_path ) ) {
-      $filename = static::relative_filename( $filename, $base_path );
-    }
-    $filename = ltrim( $filename, './' );
+    $filename = !str_contains( $filename, $base_path )?$filename:static::relative_filename( $filename, $base_path );
+    $filename = str_starts_with($filename,'./')?$filename: './'.$filename;
     $cmd = new FindWithPrintf( '.', $base_path );
-    $cmd->findName( './'.$filename );
+    $cmd->findName( $filename );
     $stat = null;
-    $cmd->run( function( $a ) use ( &$stat ) { $stat = $a; } );
+    $cmd->run( function( $a ) use ( &$stat ) { $stat = $a;} );
+    //dump($stat);
     return (array)$stat ?? [];
+  }
+  public function getFileStat( $relative_name){
+    if ($this->isMatchIgnore($relative_name)){
+      return [];
+    }
+    return static::fileStat(  $relative_name, $this->base_path );
   }
   
   public static function relative_filename ( $full_path, $to_base_dir ) {
@@ -102,7 +106,7 @@ class FindDbBuilder {
       throw new \InvalidArgumentException( "filename should be in \$this->base_path" );
     }
     $file = str_replace( $to_base_dir, '', $full_path );
-    $file = ltrim( $file, './' );
+    $file = preg_replace('%^(/|\./)%','',$file);
     return './'.$file;
   }
   
@@ -114,8 +118,9 @@ class FindDbBuilder {
     if ( is_dir( $filename ) ) {
       throw new \InvalidArgumentException( 'filename is directory.' );
     }
-    $found = $this->select_one( $this->path_in_base_dir( $filename ) ) != null;
-    $stat = static::fileStat( $this->path_in_base_dir( $filename ), $this->base_path );
+    $filename=$this->path_in_base_dir( $filename );
+    $found = $this->select_one( $filename ) != null;
+    $stat = $this->getFileStat( $filename );
     return
       ( !$found && !empty( $stat ) ) && $this->insert( $stat, $use_transaction )
       || ( $found && !empty( $stat ) ) && $this->update( $stat, $use_transaction )

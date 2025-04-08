@@ -72,6 +72,7 @@ class FindWithPrintf {
       ...($this?->name_opts?['-wholename',$this->name_opts]:[] ),
       '-printf', $this->print_format,
     ];
+    //dump(join(' ',$cmd));
     $arg = new ExecArgStruct( ...$cmd );
     $this->cwd && $arg->setCwd($this->cwd);
     $proc = new ProcessExecutor( $arg );
