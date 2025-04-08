@@ -77,6 +77,7 @@ class FindBuildDbOptsTest extends TestCase {
     $this->assertCount( 1, $ret[0] );
     $this->assertEmpty( $ret[1] );
     $this->assertCount( 1, $ret[2] );
+    $this->assertCount( 1, $builder->select($big_file) );
   }
   
   
