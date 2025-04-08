@@ -16,9 +16,11 @@ class PdoTableRepository {
   
   public function __construct (
     public PDO       $pdo,
-    protected string $table
+    protected string $table,
+    string|null $class_name=null,
   ) {
     $this->transaction_level = 0;
+    $class_name && $this->mapClass=$class_name;
   }
   
   public function select_by_id ( int $id ) {
