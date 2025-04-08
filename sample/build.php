@@ -8,6 +8,6 @@ $db = './sample.db';
 file_exists($db) && unlink($db);
 $dir = $argv[1] ?? '/etc';
 $builder = new FindDbBuilder( "sqlite:{$db}", $dir );
-$builder->findSize('+10M');
+$builder->findSizeOpt('+10M');
 $builder->build();
 

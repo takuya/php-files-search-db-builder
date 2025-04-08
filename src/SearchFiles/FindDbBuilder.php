@@ -148,7 +148,7 @@ class FindDbBuilder {
     }, $with_transaction );
   }
   
-  public function findSize ( $opt ) {
+  public function findSizeOpt ( $opt ) {
     $this->find_size = [substr( $opt, 0, 1 ), substr( $opt, 1, strlen( $opt ) )];
   }
   
