@@ -19,7 +19,7 @@ class PdoTableRepository {
     public PDO       $pdo,
     protected string $table
   ) {
-    $this->transaction_level=0;
+    $this->transaction_level = 0;
   }
   
   public function select_by_id ( int $id ) {

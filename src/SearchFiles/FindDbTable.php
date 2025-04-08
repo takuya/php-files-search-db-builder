@@ -34,8 +34,8 @@ class FindDbTable {
   }
   
   public function count ( string $filename = null ) {
-    $args = $filename ?['filename', 'LIKE', $filename ]: [];
-    return $this->repo()->count( ...$args);
+    $args = $filename ? ['filename', 'LIKE', $filename] : [];
+    return $this->repo()->count( ...$args );
   }
   
   public function delete ( $filename ) {

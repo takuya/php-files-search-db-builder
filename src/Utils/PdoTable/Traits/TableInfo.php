@@ -6,12 +6,13 @@ use PDO;
 use Takuya\ProcessExec\ProcessEvents\Events\ProcessReady;
 
 trait TableInfo {
-  public function tables(){
+  public function tables () {
     $pdo = $this->pdo;
     $st = $pdo->prepare( "SELECT * FROM sqlite_master WHERE type='table'" );
     $st->execute();
     return $st->fetchAll( PDO::FETCH_ASSOC );
   }
+  
   public function table_exists () {
     $pdo = $this->pdo;
     $st = $pdo->prepare( "SELECT count(*) as count FROM sqlite_master WHERE type='table' and name = :tb" );
