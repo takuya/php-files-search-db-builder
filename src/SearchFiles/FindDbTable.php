@@ -10,6 +10,9 @@ use Takuya\Utils\DateTimeConvert;
 
 class FindDbTable {
   
+  /**
+   * @throws TableNotFoundException
+   */
   public function __construct ( public PDO $pdo, protected string $base_path, public string $tablename = 'locates' ) {
     if ( !$this->table_exists() ) {
       throw new TableNotFoundException( 'table not found' );
