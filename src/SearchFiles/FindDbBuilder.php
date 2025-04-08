@@ -21,8 +21,16 @@ class FindDbBuilder {
   public function __construct ( string $DSN, protected string $base_path, public string $table = 'locates' ) {
     $this->pdo = new PDO( $DSN );
     $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-    !$this->table_exists() && $this->createTable();
+    $this->table_check_and_create_if_not_exit();
   }
+  protected function table_check_and_create_if_not_exit () {
+    try{
+      $this->table()->table_exists();
+    }catch (TableNotFoundException $e){
+      $this->createTable();
+    }
+  }
+  
   
   public function addIgnore ( string $pattern ): void {
     $easy_delim_check = fn( $pattern ) => preg_match( '/^([\|\/#~])([^\/#~]*)\1([a-zA-Z]*)$/', $pattern );
@@ -39,10 +47,6 @@ class FindDbBuilder {
     }
     $regex = implode( '|', $this->ignore_pattern );
     return preg_match( "/{$regex}/", $filename ) == 1;
-  }
-  
-  protected function table_exists () {
-    return ( new PdoTableRepository( $this->pdo, $this->table ) )->table_exists();
   }
   
   protected function createTable () {

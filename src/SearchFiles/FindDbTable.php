@@ -2,24 +2,23 @@
 
 namespace Takuya\SearchFiles;
 
-use Takuya\ProcessExec\ProcessExecutor;
-use Takuya\ProcessExec\ExecArgStruct;
+
+use Takuya\Utils\PdoTable\Exceptions\TableNotFoundException;
 use PDO;
-use Takuya\Utils\DateTimeConvert;
-use PHPUnit\Util\Exception;
-use Takuya\ProcOpen\ProcOpen;
 use Takuya\Utils\PdoTable\PdoTableRepository;
-use Takuya\Utils\PdoTable\Traits\TransactionBlock;
-use Takuya\Utils\PdoTable\Traits\TableInfo;
+use Takuya\Utils\DateTimeConvert;
 
 class FindDbTable {
   protected array $find_size;
   protected array $ignore_pattern;
   
   public function __construct ( public PDO $pdo, protected string $base_path, public string $tablename = 'locates' ) {
-    if ( !$this->repo()->table_exists() ) {
-      throw new \RuntimeException( 'table not found' );
+    if ( !$this->table_exists() ) {
+      throw new TableNotFoundException( 'table not found' );
     }
+  }
+  public function table_exists () {
+    return $this->repo()->table_exists();
   }
   
   protected function checkFilename ( $fname ) {

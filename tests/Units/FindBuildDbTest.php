@@ -18,9 +18,7 @@ class FindBuildDbTest extends TestCase {
   
   public function test_find_build_db_init_table () {
     $builder = new FindDbBuilder( 'sqlite::memory:', __DIR__ );
-    $method = new \ReflectionMethod( $builder, 'table_exists' );
-    $result = $method->invoke( $builder );
-    $this->assertEquals( true, $result );
+    $this->assertEquals( true, $builder->table()->table_exists() );
   }
   
   public function test_find_build_db_insert_table () {
