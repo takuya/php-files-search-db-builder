@@ -44,26 +44,14 @@ class FindWithPrintf {
     $opr && $this->size_opts = "{$opr}{$size}";
   }
   
-  protected function parseFileTime ( string $timestamp_utc ) {
-    return DateTimeConvert::ctime_jst( $timestamp_utc );
-  }
   
-  protected function stat ( $filename ) {
-    return (object)array_intersect_key( stat( __FILE__ ), array_flip( explode( ',', 'mtime,ctime,size' ) ) );
-  }
-  
-  protected function parsePrintedLine ( $line, $fn ) {
+  protected function parsePrintedLine ( $line ): FStat {
     $line = mb_convert_encoding( $line, 'utf8' );
     preg_match( '/^(?<json>\{.+?})::\s*(?<file>.+)$/', $line, $m );
     [$json, $file] = [$m['json'] ?? '{}', $m['file'] ?? ''];
     $stat = json_decode( $json );
-    if ( empty( $stat->mtime ) ) {
-      $stat = $this->stat( $file );
-    }
     $stat->filename = $file;
-    $stat->mtime = $this->parseFileTime( $stat->mtime );
-    $stat->ctime = $this->parseFileTime( $stat->ctime );
-    call_user_func( $fn, $stat );
+    return FStat::fromClass( $stat );
   }
   
   public function run ( \Closure $call_on_per_line ) {
@@ -84,7 +72,7 @@ class FindWithPrintf {
     $this->cwd && $arg->setCwd( $this->cwd );
     $proc = new ProcessExecutor( $arg );
     $proc->watch_interval = 0.01;
-    $proc->onStdout( fn( $line ) => $this->parsePrintedLine( $line, $on_per_line ) );
+    $proc->onStdout( fn( $line ) => call_user_func( $on_per_line, $this->parsePrintedLine( $line ) ) );
     $proc->start();
   }
   
