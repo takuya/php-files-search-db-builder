@@ -5,16 +5,24 @@ namespace Takuya\SearchFiles;
 use Takuya\Utils\DateTimeConvert;
 
 class FStat {
+  public string $filename;
+  public string|int $size;
+  public string|int $ctime;
+  public string|int|null $mtime;
+  
   public function __construct (
-    public string          $filename,
-    public string|int      $size,
-    public string|int      $ctime,
-    public string|int|null $mtime
+    string          $filename,
+    string|int      $size,
+    string|int      $ctime,
+    string|int|null $mtime
   ) {
-    $this->mtime ??= $this->ctime;
-    foreach ( ['mtime', 'ctime'] as $name ) {
-      $this->{$name} = is_numeric( $this->{$name} ) ? DateTimeConvert::ctime_jst( $this->{$name} ) : $this->{$name};
-    }
+    $mtime = $mtime ?? $ctime;
+    $this->filename = $filename;
+    $this->size = $size;
+    $this->ctime = $ctime;
+    $this->mtime = $mtime;
+    $this->mtime = is_numeric( $this->mtime ) ? DateTimeConvert::ctime_jst( $this->mtime ) : $this->mtime;
+    $this->ctime = is_numeric( $this->ctime ) ? DateTimeConvert::ctime_jst( $this->ctime ) : $this->ctime;
   }
   
   public static function fromClass ( object $stat ): FStat {
