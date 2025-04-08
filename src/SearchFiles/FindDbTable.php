@@ -45,7 +45,7 @@ class FindDbTable {
   
   public function update ( array|object $key_and_val ) {
     $this->checkFilename( ( (array)$key_and_val )['filename'] );
-    return $this->repo()->update( (array)$key_and_val,['filename'=>((array)$key_and_val)['filename']] );
+    return $this->repo()->update( (array)$key_and_val, ['filename' => ( (array)$key_and_val )['filename']] );
   }
   
   public function insert ( array|object $key_and_val ) {
