@@ -3,7 +3,6 @@
 namespace Takuya\SearchFiles;
 
 
-
 use PDO;
 use Takuya\Utils\PdoTable\Traits\TransactionBlock;
 use Takuya\Utils\PdoTable\Exceptions\TableNotFoundException;
@@ -23,10 +22,11 @@ class FindDbBuilder {
     $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
     $this->table_check_and_create_if_not_exit();
   }
+  
   protected function table_check_and_create_if_not_exit (): void {
-    try{
+    try {
       $this->table();
-    }catch (TableNotFoundException $e){
+    } catch (TableNotFoundException $e) {
       $this->createTable();
     }
   }
@@ -85,25 +85,6 @@ class FindDbBuilder {
       $this->verbose && ( fwrite( STDOUT, $ret.PHP_EOL ) && fflush( STDOUT ) );
     } );
     $this->commitTranscation();
-  }
-  
-  public static function fileStat ( $filename, $base_path, $opt_size = null ) {
-    $filename = !str_contains( $filename, $base_path ) ? $filename : static::relative_filename( $filename, $base_path );
-    $filename = str_starts_with( $filename, './' ) ? $filename : './'.$filename;
-    $cmd = new FindWithPrintf( '.', $base_path );
-    $cmd->findName( $filename );
-    $opt_size && $cmd->findSize( ...$opt_size );
-    $stat = null;
-    $cmd->run( function( $a ) use ( &$stat ) { $stat = $a; } );
-    //dump($stat);
-    return (array)$stat ?? [];
-  }
-  
-  public function getFileStat ( $relative_name ) {
-    if ( $this->isMatchIgnore( $relative_name ) ) {
-      return [];
-    }
-    return static::fileStat( $relative_name, $this->base_path, $this->find_size ?? null );
   }
   
   public static function relative_filename ( $full_path, $to_base_dir ) {
@@ -166,5 +147,24 @@ class FindDbBuilder {
     $find = new FindWithPrintf( '.', $this->base_path );
     !empty( $this->find_size ) && $find->findSize( ...$this->find_size );
     $find->run( $fn );
+  }
+  
+  public function getFileStat ( $relative_name ) {
+    if ( $this->isMatchIgnore( $relative_name ) ) {
+      return [];
+    }
+    try {
+      $stat = static::fileStat( $relative_name, $this->base_path, $this->find_size ?? null );
+    } catch (\BadFunctionCallException $e) {
+      return null;
+    }
+    return $stat;
+  }
+  
+  public static function fileStat ( $filename, $base_path, $opt_size = null ) {
+    $filename = !str_contains( $filename, $base_path ) ? $filename : static::relative_filename( $filename, $base_path );
+    $filename = str_starts_with( $filename, './' ) ? $filename : './'.$filename;
+    $stat = FStat::fromFindCmd( $filename, $base_path, $opt_size );
+    return $stat;
   }
 }

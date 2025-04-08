@@ -4,7 +4,7 @@ namespace Takuya\SearchFiles;
 
 use Takuya\Utils\DateTimeConvert;
 
-class FStat {
+class FStat implements \ArrayAccess {
   public string $filename;
   public string|int $size;
   public string|int $ctime;
@@ -36,11 +36,41 @@ class FStat {
   
   public static function stat ( $filename ): FStat {
     return static::fromClass( (object)array_merge(
-      compact( 'filename' ), static::stat_as_array( $filename ) ) );
+      compact( 'filename' ), static::stat_by_func( $filename ) ) );
   }
   
-  public static function stat_as_array ( $filename, $keys = ['mtime', 'ctime', 'size'] ): array {
+  public static function stat_by_func ( $filename, $keys = ['mtime', 'ctime', 'size'] ): array {
     return array_intersect_key( stat( $filename ), array_flip( $keys ) );
+  }
+  
+  public static function fromFindCmd ( $filename, $base_path, $opt_size = null ): FStat {
+    $cmd = new FindWithPrintf( '.', $base_path );
+    $cmd->findName( $filename );
+    $opt_size && $cmd->findSize( ...$opt_size );
+    $stat = null;
+    $cmd->run( function( $a ) use ( &$stat ) { $stat = $a; } );
+    if ( is_null( $stat ) ) {
+      throw new \BadFunctionCallException(
+        __METHOD__.'() failed, check find options and check file exists.'
+        , 12345 );
+    }
+    return $stat;
+  }
+  
+  #[\Override] public function offsetExists ( mixed $offset ): bool {
+    return property_exists( $this, $offset );
+  }
+  
+  #[\Override] public function offsetGet ( mixed $offset ): mixed {
+    return $this->$offset;
+  }
+  
+  #[\Override] public function offsetSet ( mixed $offset, mixed $value ): void {
+    $this->$offset = $value;
+  }
+  
+  #[\Override] public function offsetUnset ( mixed $offset ): void {
+    throw new \RuntimeException( 'no support.' );
   }
   
 }
