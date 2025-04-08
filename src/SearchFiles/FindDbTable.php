@@ -9,8 +9,6 @@ use Takuya\Utils\PdoTable\PdoTableRepository;
 use Takuya\Utils\DateTimeConvert;
 
 class FindDbTable {
-  protected array $find_size;
-  protected array $ignore_pattern;
   
   public function __construct ( public PDO $pdo, protected string $base_path, public string $tablename = 'locates' ) {
     if ( !$this->table_exists() ) {
