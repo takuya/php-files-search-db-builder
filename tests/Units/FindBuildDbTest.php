@@ -36,14 +36,15 @@ class FindBuildDbTest extends TestCase {
   public function test_find_build_db_insert_table () {
     $builder = new FindDbBuilder( 'sqlite::memory:', __DIR__ );
     $stat = array_intersect_key( stat( __FILE__ ), array_flip( explode( ',', 'mtime,ctime,size' ) ) );
-    $ret = $builder->insert( __FILE__, ...$stat );
+    $stat['filename'] = FindDbBuilder::relative_filename(__FILE__,__DIR__);
+    $ret = $builder->insert( $stat );
     $this->assertEquals( true, $ret );
     //
     //
     $ret = $builder->select_one( __FILE__ );
     //
     $this->assertEquals( $stat['size'], $ret->size );
-    $this->assertEquals( __FILE__, $ret->filename );
+    $this->assertEquals( FindDbBuilder::relative_filename(__FILE__,__DIR__), $ret->filename );
     $mtime = (int)DateTimeConvert::parse_format_c( $ret->mtime )->format( 'U' );
     $this->assertEquals( $stat['mtime'], $mtime );
   }
@@ -61,8 +62,17 @@ class FindBuildDbTest extends TestCase {
     $mtime = (int)DateTimeConvert::parse_format_c( $ret->mtime )->format( 'U' );
     $this->assertEquals( $stat['mtime'], $mtime );
     //
-    $cnt = sizeof( glob( "{{$dir}/*.php,{$dir}/**/*.php}", GLOB_BRACE ) );
-    $this->assertEquals( $cnt, $builder->count() );
+    $files= glob( "{{$dir}/{,*/,*/*/,*/*/*/,*/*/*/*/,*/*/*/*/*/}*.php}", GLOB_BRACE );
+    $this->assertEquals( sizeof( $files ), $builder->count() );
+  }
+  public function test_find_count_in_locate_db() {
+    $dir = realpath( __DIR__.'/..' );
+    $builder = new FindDbBuilder( 'sqlite::memory:', $dir );
+    $builder->build();
+    $ret[] = $builder->table()->select('%');
+    $ret[] = $builder->table()->count('%');
+    $this->assertEquals(sizeof($ret[0]),$ret[1]);
+    //
   }
   public function test_update_entry_in_locate_sqlite_database(){
     $dir = temp_dir();
@@ -75,7 +85,7 @@ class FindBuildDbTest extends TestCase {
     /// update file
     sleep(1);
     file_put_contents($fullpath,random_bytes(512));
-    $builder->update($fullpath);
+    $builder->updateEntry($fullpath);
     //
     $ret[]=$builder->select_one( "./{$filename}" );
     $this->assertEquals(512,$ret[1]->size);
@@ -99,7 +109,7 @@ class FindBuildDbTest extends TestCase {
     $ret[]=$builder->select_one( "./{$filename}" );
     // delete file
     unlink($fullpath);
-    $builder->update($fullpath);
+    $builder->updateEntry($fullpath);
     // detect deleted.
     $ret[]=$builder->select_one( "./{$filename}" );
     //

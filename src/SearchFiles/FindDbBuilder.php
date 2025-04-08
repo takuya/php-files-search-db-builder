@@ -14,7 +14,6 @@ use Takuya\Utils\PdoTable\Traits\TransactionBlock;
 class FindDbBuilder {
   use TransactionBlock;
   public PDO $pdo;
-  protected int $transaction_level;
   public bool $dry_run=false;
   public bool $verbose=false;
   protected array $find_size;
@@ -42,14 +41,7 @@ class FindDbBuilder {
   }
   
   protected function table_exists () {
-    $pdo = $this->pdo;
-    $st = $pdo->prepare( "SELECT count(*) as count FROM sqlite_master WHERE type='table' and name = :tb" );
-    //$st = $pdo->prepare( "SELECT * FROM sqlite_master WHERE type='table'" );
-    $st->bindParam( 'tb', $this->table );
-    $st->execute();
-    $ret = $st->fetch( PDO::FETCH_ASSOC );
-    $this->transaction_level = 0;
-    return $ret && ( $ret['count'] ?? 0 ) > 0;
+    return (new PdoTableRepository($this->pdo,$this->table))->table_exists();
   }
   
   protected function createTable () {
@@ -60,90 +52,85 @@ class FindDbBuilder {
     $pdo->commit();
   }
   
-  public function insert ( string $filename, string $mtime, string $ctime, string $size ) {
-    $stat = (object)compact( 'filename', 'mtime', 'ctime', 'size' );
-    $stat->mtime = is_numeric( $stat->ctime ) ? DateTimeConvert::ctime_jst( $stat->mtime ) : $stat->mtime;
-    $stat->ctime = is_numeric( $stat->ctime ) ? DateTimeConvert::ctime_jst( $stat->ctime ) : $stat->ctime;
-    $table = new PdoTableRepository($this->pdo,$this->table);
-    return $table->insert((array)$stat);
+  public function insert ( $stat,$use_transaction=false ) {
+    return $this->commit(function()use($stat){
+      return $this->table()->insert($stat);
+    },$use_transaction);
   }
   
-  public function select_one ( string $filename ) {
-    return (new PdoTableRepository($this->pdo,$this->table))->select_one('filename','LIKE',$filename);
+  public function select_one ( string $filename,$cond='LIKE' ) {
+    return $this->table()->select_one($this->path_in_base_dir($filename),$cond);
   }
-  public function select ( string $filename ) {
-    return (new PdoTableRepository($this->pdo,$this->table))->select('filename','LIKE',$filename);
+  public function select ( string $filename,$cond='LIKE' ) {
+    return $this->table()->select($this->path_in_base_dir($filename),$cond);
   }
   
   public function count () {
-    return  (new PdoTableRepository($this->pdo,$this->table))->count();
+    return  $this->table()->count();
   }
   
   public function build () {
-    $this->begin();
+    $this->beginTranaction();
     $this->find_files( function( $stat ) {
       if($this->isMatchIgnore($stat->filename)){
         return;
       }
-      $this->dry_run || $ret=$this->insert( $stat->filename, $stat->mtime, $stat->ctime, $stat->size );
+      $this->dry_run || $ret=$this->insert( $stat,false );
       $this->verbose && ( fwrite(STDOUT,$ret.PHP_EOL)&& fflush(STDOUT));
     } );
-    $this->commit();
+    $this->commitTranscation();
   }
   
   public static function fileStat ( $filename,$base_path ) {
+    if (str_contains($filename,$base_path)){
+      $filename= static::relative_filename($filename,$base_path);
+    }
     $filename = ltrim($filename,'./');
     $cmd = new FindWithPrintf('.', $base_path);
     $cmd->findName('./'.$filename);
     $stat = null;
     $cmd->run(function($a)use(&$stat){$stat=$a;});
-    return (array)$stat;
+    return (array)$stat??[];
   }
-  
-  public function path_to_base_dir ( $file ) {
-    if ( false == str_contains( $file, $this->base_path ) ) {
+  public static function relative_filename( $full_path, $to_base_dir){
+    if ( false == str_contains( $full_path, $to_base_dir ) ) {
       throw new \InvalidArgumentException( "filename should be in \$this->base_path" );
     }
-    $file = str_replace( $this->base_path, '', $file );
-    $file = ltrim( $file, '/' );
-    $file = './'.$file;
-    return $file;
+    $file = str_replace($to_base_dir,'',$full_path);
+    $file = ltrim($file,'./');
+    return './'.$file;
   }
   
-  public function update ( $filename ) {
+  public function path_in_base_dir ( $file ) {
+    return str_contains( $file, $this->base_path ) ? static::relative_filename($file,$this->base_path) : $file;
+  }
+  
+  public function updateEntry ( $filename,$use_transaction=false ) {
     if (is_dir($filename)){
-      return false;
+      throw new \InvalidArgumentException('filename is directory.');
     }
-    if ( !file_exists( $filename ) ) {
-      return $this->delete( $filename );
-    }
-    try {
-      $wd = getcwd();
-      chdir( $this->base_path );
-      $filename = $this->path_to_base_dir( $filename );
-      //
-      $this->begin();
-      $ret = (new PdoTableRepository($this->pdo,$this->table))->update(static::fileStat( $filename,$this->base_path ));
-      $this->commit();
-      return $ret;
-    } catch (\Exception $e) {
-      $this->rollBack();
-      throw $e;
-    } finally {
-      chdir( $wd );
-    }
+    $found = $this->select_one($this->path_in_base_dir( $filename )) != null;
+    $stat = static::fileStat( $this->path_in_base_dir( $filename ),$this->base_path );
+    return (!$found && !empty($stat)) && $this->insert($stat,$use_transaction)
+    || ($found && !empty($stat)) && $this->update($stat,$use_transaction)
+    || ($found && empty($stat)) && $this->delete($filename,$use_transaction);
+  }
+  private function operator(){
+    return new FindDbTable($this->pdo,$this->base_path,$this->table);
+  }
+  public function table(){
+    return $this->operator();
+  }
+  protected function update($stat, $with_transaction=true){
+    return $this->commit(function()use($stat){
+      return $this->table()->update($stat);
+    },$with_transaction);
   }
   
-  protected function delete ( $filename ) {
-    try {
-      $this->begin();
-      $ret = (new PdoTableRepository($this->pdo,$this->table))->delete('filename', $this->path_to_base_dir( $filename ) );
-      $this->commit();
-      return $ret;
-    } catch (\Exception $e) {
-      $this->rollBack();
-      throw $e;
-    }
+  protected function delete ( $filename, $with_transaction=true ) {
+    return $this->commit(function()use($filename){
+      return $this->table()->delete( $this->path_in_base_dir( $filename ) );
+    },$with_transaction);
   }
   public function findSize($opt){
     $this->find_size = [substr($opt,0,1),substr($opt,0,strlen($opt))];
