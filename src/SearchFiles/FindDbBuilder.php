@@ -84,11 +84,12 @@ class FindDbBuilder {
     } );
     $this->commitTranscation();
   }
-  public static function fileStat ( $filename, $base_path ) {
+  public static function fileStat ( $filename, $base_path,$opt_size=null ) {
     $filename = !str_contains( $filename, $base_path )?$filename:static::relative_filename( $filename, $base_path );
     $filename = str_starts_with($filename,'./')?$filename: './'.$filename;
     $cmd = new FindWithPrintf( '.', $base_path );
     $cmd->findName( $filename );
+    $opt_size && $cmd->findSize(...$opt_size);
     $stat = null;
     $cmd->run( function( $a ) use ( &$stat ) { $stat = $a;} );
     //dump($stat);
@@ -98,7 +99,7 @@ class FindDbBuilder {
     if ($this->isMatchIgnore($relative_name)){
       return [];
     }
-    return static::fileStat(  $relative_name, $this->base_path );
+    return static::fileStat(  $relative_name, $this->base_path,$this->find_size??null );
   }
   
   public static function relative_filename ( $full_path, $to_base_dir ) {
@@ -148,7 +149,7 @@ class FindDbBuilder {
   }
   
   public function findSize ( $opt ) {
-    $this->find_size = [substr( $opt, 0, 1 ), substr( $opt, 0, strlen( $opt ) )];
+    $this->find_size = [substr( $opt, 0, 1 ), substr( $opt, 1, strlen( $opt ) )];
   }
   
   protected function find_files ( callable $fn ) {

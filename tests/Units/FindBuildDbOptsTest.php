@@ -28,7 +28,7 @@ class FindBuildDbOptsTest extends TestCase {
   public function tearDown (): void {
   }
   
-  public function test_find_buid_db_add_ignores() {
+  public function test_find_build_db_add_ignores() {
     $builder = new FindDbBuilder( 'sqlite::memory:', $this->dir );
     $builder->addIgnore('.+\.php');
     $builder->addIgnore('\.git\/');
@@ -39,7 +39,7 @@ class FindBuildDbOptsTest extends TestCase {
     $last = array_pop($ret);
     $this->assertEquals('./composer.json',$last->filename);
   }
-  public function test_find_buid_db_keep_ignore_on_update_entry() {
+  public function test_find_build_db_keep_ignore_on_update_entry() {
     $builder = new FindDbBuilder( 'sqlite::memory:', $this->dir );
     $builder->addIgnore('.+\.php');
     $builder->addIgnore('\.git\/');
@@ -67,6 +67,26 @@ class FindBuildDbOptsTest extends TestCase {
       $ret = $builder->select($fname);
       $this->assertNotEmpty($ret);
     }
+  }
+  public function test_find_build_db_file_size_filtering() {
+    
+    $dir = temp_dir();
+    file_put_contents($smallfile = $dir.'/'.str_rand(10).'-small.txt',random_bytes(100));
+    file_put_contents($largefile = $dir.'/'.str_rand(10).'-large.txt',random_bytes(1024+1));
+    $builder = new FindDbBuilder( 'sqlite::memory:' ,$dir);
+    $builder->findSize('+1k');
+    $builder->build();
+    $ret[] = $builder->select( "%" );
+    file_put_contents($tiny_file = $dir.'/'.str_rand(10).'-tiny.txt',random_bytes(1));
+    $builder->updateEntry($tiny_file);
+    $ret[]= $builder->select($tiny_file);
+    file_put_contents($big_file = $dir.'/'.str_rand(10).'-big.txt',random_bytes(2048));
+    $builder->updateEntry($big_file);
+    $ret[] = $builder->select( $big_file );
+    //
+    $this->assertCount(1,$ret[0]);
+    $this->assertEmpty($ret[1]);
+    $this->assertCount(1,$ret[2]);
   }
   
   
