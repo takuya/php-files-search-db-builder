@@ -4,9 +4,8 @@ namespace Takuya\Utils\PdoTable;
 
 use PDO;
 use Takuya\Utils\PdoTable\Traits\TransactionBlock;
-use function PHPUnit\Framework\matches;
-use Takuya\Utils\PdoTable\Traits\GenericCRUD;
 use Takuya\Utils\PdoTable\Traits\TableInfo;
+use Takuya\Utils\PdoTable\Traits\GenericCRUD;
 use Takuya\Utils\PdoTable\Traits\CountSelect;
 
 class PdoTableRepository {

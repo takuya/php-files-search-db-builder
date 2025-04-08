@@ -3,7 +3,6 @@
 namespace Takuya\Utils\PdoTable\Traits;
 
 use PDO;
-use Takuya\ProcessExec\ProcessEvents\Events\ProcessReady;
 
 trait TableInfo {
   public function tables () {
