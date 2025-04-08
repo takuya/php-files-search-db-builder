@@ -23,7 +23,7 @@ class FindDbBuilder {
     $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
     $this->table_check_and_create_if_not_exit();
   }
-  protected function table_check_and_create_if_not_exit () {
+  protected function table_check_and_create_if_not_exit (): void {
     try{
       $this->table();
     }catch (TableNotFoundException $e){
