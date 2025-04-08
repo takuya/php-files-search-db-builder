@@ -1,6 +1,6 @@
 <?php
 
-use Takuya\Utils\PdoTable\PdoTableRepository;
+use Takuya\Utils\PdoTable\Exceptions\Utils\PdoTable\PdoTableRepository;
 
 require __DIR__.'/../vendor/autoload.php';
 

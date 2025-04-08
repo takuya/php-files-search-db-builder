@@ -2,10 +2,11 @@
 
 namespace Tests\SearchFiles\Units\DbUpdate;
 
-use Tests\SearchFiles\TestCase;
-use function Takuya\Helpers\str_rand;
+
 use Takuya\SearchFiles\FindDbBuilder;
+use Tests\SearchFiles\TestCase;
 use function Takuya\Helpers\temp_dir;
+use function Takuya\Helpers\str_rand;
 
 class   FindSubdirFileUpdatesTest extends TestCase {
   

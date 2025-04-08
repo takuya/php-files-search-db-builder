@@ -2,14 +2,12 @@
 
 namespace Takuya\SearchFiles;
 
-use Takuya\ProcessExec\ProcessExecutor;
-use Takuya\ProcessExec\ExecArgStruct;
+
+
 use PDO;
-use Takuya\Utils\DateTimeConvert;
-use PHPUnit\Util\Exception;
-use Takuya\ProcOpen\ProcOpen;
-use Takuya\Utils\PdoTable\PdoTableRepository;
 use Takuya\Utils\PdoTable\Traits\TransactionBlock;
+use Takuya\Utils\PdoTable\Exceptions\TableNotFoundException;
+
 
 class FindDbBuilder {
   use TransactionBlock;

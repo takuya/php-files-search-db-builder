@@ -3,17 +3,7 @@
 namespace Tests\SearchFiles\Units;
 
 use Tests\SearchFiles\TestCase;
-use Takuya\FsNotifyWrapper\LocateWrap;
-use Takuya\FsNotifyWrapper\LocateDbBuilder;
-use function Takuya\Helpers\str_rand;
-use Takuya\FsNotifyWrapper\FsNotifyWrap;
-use Takuya\FsNotifyWrapper\FsEventObserver;
-use Takuya\FsNotifyWrapper\Events\FsNotifyCreate;
-use Takuya\FsNotifyWrapper\FsEventEmitter;
-use Takuya\FsNotifyWrapper\Events\FanEvent;
-use Takuya\FsNotifyWrapper\FsEventEnum;
 use Takuya\SearchFiles\FindWithPrintf;
-use PDO;
 
 class FindCallbackPerLineTest extends TestCase {
   
