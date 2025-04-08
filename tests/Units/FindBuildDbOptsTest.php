@@ -64,7 +64,7 @@ class FindBuildDbOptsTest extends TestCase {
     file_put_contents( $smallfile = $dir.'/'.str_rand( 10 ).'-small.txt', random_bytes( 100 ) );
     file_put_contents( $largefile = $dir.'/'.str_rand( 10 ).'-large.txt', random_bytes( 1024 + 1 ) );
     $builder = new FindDbBuilder( 'sqlite::memory:', $dir );
-    $builder->findSize( '+1k' );
+    $builder->findSizeOpt( '+1k' );
     $builder->build();
     $ret[] = $builder->select( "%" );
     file_put_contents( $tiny_file = $dir.'/'.str_rand( 10 ).'-tiny.txt', random_bytes( 1 ) );
