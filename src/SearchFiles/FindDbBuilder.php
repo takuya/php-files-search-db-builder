@@ -25,7 +25,7 @@ class FindDbBuilder {
   }
   protected function table_check_and_create_if_not_exit () {
     try{
-      $this->table()->table_exists();
+      $this->table();
     }catch (TableNotFoundException $e){
       $this->createTable();
     }
