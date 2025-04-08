@@ -132,10 +132,16 @@ class FindDbBuilder {
       || ( $found && empty( $stat ) ) && $this->delete( $filename, $use_transaction );
   }
   
+  /**
+   * @throws TableNotFoundException
+   */
   private function operator () {
     return new FindDbTable( $this->pdo, $this->base_path, $this->table );
   }
   
+  /**
+   * @throws TableNotFoundException
+   */
   public function table () {
     return $this->operator();
   }
