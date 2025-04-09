@@ -18,17 +18,27 @@ class FindDbBuilder {
   public array $ignore_pattern;
   
   public function __construct ( public string $DSN, public string $base_path, public string $table = 'locates' ) {
-    $this->pdo = new PDO( $DSN );
-    $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+    $this->pdo=$this->init_pdo($this->DSN);
     $this->table_check_and_create_if_not_exit();
+  }
+  protected function init_pdo($dsn){
+    $pdo = new PDO( $dsn );
+    $pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+    return $pdo;
   }
   
   public function __serialize (): array {
-    $arr  = get_object_vars($this);
-    unset($arr['PDO']);
+    $arr = get_object_vars( $this );
+    unset( $arr['pdo'] );
     return $arr;
   }
   
+  public function __unserialize ( array $data ): void {
+    foreach ($data as $k=>$v){
+      $this->{$k} = $v;
+    }
+    $this->pdo=$this->init_pdo($this->DSN);
+  }
   
   protected function table_check_and_create_if_not_exit (): void {
     try {
