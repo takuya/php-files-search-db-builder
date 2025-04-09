@@ -14,14 +14,21 @@ class FindDbBuilder {
   public PDO $pdo;
   public bool $dry_run = false;
   public bool $verbose = false;
-  protected array $find_size;
-  protected array $ignore_pattern;
+  public array $find_size;
+  public array $ignore_pattern;
   
-  public function __construct ( string $DSN, protected string $base_path, public string $table = 'locates' ) {
+  public function __construct ( public string $DSN, public string $base_path, public string $table = 'locates' ) {
     $this->pdo = new PDO( $DSN );
     $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
     $this->table_check_and_create_if_not_exit();
   }
+  
+  public function __serialize (): array {
+    $arr  = get_object_vars($this);
+    unset($arr['PDO']);
+    return $arr;
+  }
+  
   
   protected function table_check_and_create_if_not_exit (): void {
     try {
