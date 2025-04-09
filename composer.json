@@ -3,7 +3,7 @@
   "description": "search file names in directory",
   "type": "library",
   "license": "GPL-3.0-or-later",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "autoload": {
     "psr-4": {
       "Takuya\\SearchFiles\\": "src/SearchFiles",
